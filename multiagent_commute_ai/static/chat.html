@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HR Policy Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f2f5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Shell ── */
+    .shell {
+      width: 100%;
+      max-width: 780px;
+      height: 100vh;
+      max-height: 900px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #1a73e8, #0d47a1);
+      color: #fff;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .header-icon {
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .header-text h1 { font-size: 17px; font-weight: 600; }
+    .header-text p  { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+    .status-dot {
+      margin-left: auto;
+      width: 10px; height: 10px;
+      background: #4caf50;
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(76,175,80,0.3);
+    }
+
+    /* ── Employee ID bar ── */
+    .emp-bar {
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #555;
+    }
+    .emp-bar label { font-weight: 500; white-space: nowrap; }
+    .emp-bar input {
+      flex: 1;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .emp-bar input:focus { border-color: #1a73e8; }
+
+    /* ── Messages area ── */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    /* ── Welcome card ── */
+    .welcome {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+    .welcome .icon { font-size: 52px; margin-bottom: 12px; }
+    .welcome h2 { font-size: 20px; color: #333; margin-bottom: 8px; }
+    .welcome p  { font-size: 14px; line-height: 1.6; max-width: 380px; margin: 0 auto; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+    .chip {
+      background: #e8f0fe;
+      color: #1a73e8;
+      border: 1px solid #c5d8fb;
+      border-radius: 20px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .chip:hover { background: #d2e3fc; }
+
+    /* ── Bubbles ── */
+    .msg { display: flex; align-items: flex-end; gap: 8px; }
+    .msg.user  { flex-direction: row-reverse; }
+    .msg.bot   { flex-direction: row; }
+
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .msg.user .avatar { background: #1a73e8; color: #fff; }
+    .msg.bot  .avatar { background: #e8f0fe; }
+
+    .bubble {
+      max-width: 72%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+    .msg.user .bubble {
+      background: #1a73e8;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.bot .bubble {
+      background: #f1f3f4;
+      color: #202124;
+      border-bottom-left-radius: 4px;
+    }
+
+    /* ── Meta tags inside bot bubble ── */
+    .meta { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      font-size: 11.5px;
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .tag.intent   { background: #e8f0fe; color: #1a73e8; }
+    .tag.source   { background: #e6f4ea; color: #188038; }
+    .tag.anomaly  { background: #fce8e6; color: #c5221f; }
+    .tag.shap     { background: #fff8e1; color: #e37400; }
+    .tag.escalate { background: #fce8e6; color: #c5221f; }
+    .tag.ok       { background: #e6f4ea; color: #188038; }
+
+    /* ── Typing indicator ── */
+    .typing .bubble {
+      background: #f1f3f4;
+      padding: 14px 18px;
+    }
+    .dots { display: flex; gap: 5px; }
+    .dots span {
+      width: 8px; height: 8px;
+      background: #aaa;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%            { transform: translateY(-6px); }
+    }
+
+    /* ── Input bar ── */
+    .input-bar {
+      border-top: 1px solid #e0e0e0;
+      padding: 14px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      background: #fff;
+    }
+    .input-bar textarea {
+      flex: 1;
+      border: 1px solid #ddd;
+      border-radius: 22px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      max-height: 120px;
+      line-height: 1.5;
+      transition: border 0.2s;
+    }
+    .input-bar textarea:focus { border-color: #1a73e8; }
+    .send-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: #1a73e8;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    .send-btn:hover   { background: #1558b0; }
+    .send-btn:active  { transform: scale(0.94); }
+    .send-btn:disabled { background: #bbb; cursor: not-allowed; }
+    .send-btn svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">&#128101;</div>
+    <div class="header-text">
+      <h1>HR Policy Assistant</h1>
+      <p>Commute & Travel Support</p>
+    </div>
+    <div class="status-dot" id="statusDot" title="Checking..."></div>
+  </div>
+
+  <!-- Employee ID -->
+  <div class="emp-bar">
+    <label for="empId">Employee ID:</label>
+    <input id="empId" type="text" placeholder="e.g. EMP_4821" value="EMP_001" maxlength="20" />
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <div class="icon">&#128218;</div>
+      <h2>Hello! How can I help you?</h2>
+      <p>Ask me anything about your commute policy, travel reimbursements, delay claims, or emergency procedures.</p>
+      <div class="chips">
+        <span class="chip" onclick="sendChip(this)">Who is eligible for commute transport?</span>
+        <span class="chip" onclick="sendChip(this)">What happens if the driver deviates from route?</span>
+        <span class="chip" onclick="sendChip(this)">How does the panic button work?</span>
+        <span class="chip" onclick="sendChip(this)">What are the billing models for cabs?</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-bar">
+    <textarea id="input" rows="1" placeholder="Type your question..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+
+</div>
+
+<script>
+const API = "http://localhost:8000";
+let busy = false;
+
+// ── Health check ─────────────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const r = await fetch(API + "/health");
+    const d = await r.json();
+    const dot = document.getElementById("statusDot");
+    dot.style.background = d.status === "ok" ? "#4caf50" : "#ff9800";
+    dot.title = d.status === "ok" ? "All systems online" : "Degraded — some models failed to load";
+  } catch {
+    const dot = document.getElementById("statusDot");
+    dot.style.background = "#f44336";
+    dot.title = "Cannot reach server";
+  }
+}
+checkHealth();
+
+// ── Textarea auto-resize ──────────────────────────────────────────────────────
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 120) + "px";
+}
+
+// ── Enter key ────────────────────────────────────────────────────────────────
+function handleKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+// ── Chip shortcuts ────────────────────────────────────────────────────────────
+function sendChip(el) {
+  document.getElementById("input").value = el.textContent;
+  sendMessage();
+}
+
+// ── Append a bubble ───────────────────────────────────────────────────────────
+function appendBubble(role, html, id) {
+  const welcome = document.getElementById("welcome");
+  if (welcome) welcome.remove();
+
+  const msgs = document.getElementById("messages");
+  const avatarChar = role === "user" ? "&#128100;" : "&#129302;";
+  const div = document.createElement("div");
+  div.className = "msg " + role;
+  if (id) div.id = id;
+  div.innerHTML = `
+    <div class="avatar">${avatarChar}</div>
+    <div class="bubble">${html}</div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function removeById(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ── Build bot response HTML ───────────────────────────────────────────────────
+function buildBotHTML(data) {
+  let html = escHtml(data.final_response || "Sorry, I could not process your request.");
+
+  const tags = [];
+
+  // Intent
+  const intentLabel = {
+    policy_query:  "Policy question",
+    delay_claim:   "Delay claim",
+    both:          "Policy + Claim",
+    out_of_scope:  "Out of scope",
+  }[data.intent] || data.intent;
+  tags.push(`<span class="tag intent">&#127919; ${escHtml(intentLabel)}</span>`);
+
+  // Sources
+  if (data.source_sections && data.source_sections.length) {
+    data.source_sections.forEach(s =>
+      tags.push(`<span class="tag source">&#128196; ${escHtml(s)}</span>`)
+    );
+  }
+
+  // Anomaly
+  if (data.anomaly_flagged) {
+    const pct = data.anomaly_probability != null
+      ? ` (${(data.anomaly_probability * 100).toFixed(0)}% anomaly probability)`
+      : "";
+    tags.push(`<span class="tag anomaly">&#9888; Claim flagged for review${escHtml(pct)}</span>`);
+
+    if (data.shap_explanation && data.shap_explanation.length) {
+      data.shap_explanation.forEach(f =>
+        tags.push(`<span class="tag shap">&#128202; ${escHtml(f)}</span>`)
+      );
+    }
+  } else if (data.intent === "delay_claim" || data.intent === "both") {
+    tags.push(`<span class="tag ok">&#10003; No anomaly detected</span>`);
+  }
+
+  // Escalation
+  if (data.needs_escalation) {
+    tags.push(`<span class="tag escalate">&#128226; Escalation required</span>`);
+  }
+
+  if (tags.length) {
+    html += `<div class="meta">${tags.join("")}</div>`;
+  }
+
+  return html;
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// ── Main send ─────────────────────────────────────────────────────────────────
+async function sendMessage() {
+  if (busy) return;
+  const input = document.getElementById("input");
+  const query = input.value.trim();
+  if (!query) return;
+
+  const empId = document.getElementById("empId").value.trim() || "EMP_001";
+
+  // Reset input
+  input.value = "";
+  input.style.height = "auto";
+  document.getElementById("sendBtn").disabled = true;
+  busy = true;
+
+  // User bubble
+  appendBubble("user", escHtml(query));
+
+  // Typing indicator
+  const typingId = "typing-" + Date.now();
+  appendBubble("bot", `<div class="dots"><span></span><span></span><span></span></div>`, typingId);
+
+  try {
+    const payload = { employee_id: empId, query: query };
+
+    const r = await fetch(API + "/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    removeById(typingId);
+
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({ detail: r.statusText }));
+      appendBubble("bot", `&#9888; Error ${r.status}: ${escHtml(err.detail || r.statusText)}`);
+    } else {
+      const data = await r.json();
+      appendBubble("bot", buildBotHTML(data));
+    }
+  } catch (e) {
+    removeById(typingId);
+    appendBubble("bot", "&#9888; Could not reach the server. Make sure the backend is running on port 8000.");
+  }
+
+  document.getElementById("sendBtn").disabled = false;
+  busy = false;
+  input.focus();
+}
+</script>
+</body>
+</html>

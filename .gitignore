@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment secrets — NEVER commit these
+.env
+*.env
+
+# Trained model artefacts (large binaries — regenerate locally)
+multiagent_commute_ai/models/isolation_forest.pkl
+multiagent_commute_ai/models/shap_explainer.pkl
+multiagent_commute_ai/models/shap_values_sample.csv
+
+# FAISS index (regenerate with python -m rag.ingestion)
+multiagent_commute_ai/indexes/
+
+# Generated training data (regenerate with python data/generate_commute_records.py)
+multiagent_commute_ai/data/commute_records.csv
+
+# Policy PDFs — add your own (not committed to keep repo lightweight)
+multiagent_commute_ai/data/policies/*.pdf
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+.claude/
