@@ -57,23 +57,27 @@ def _contains_fabricated_amount(answer: str, chunks: List[Dict[str, Any]]) -> bo
 
 def _build_search_query(state: AgentState) -> str:
     """
-    Build an enriched RAG search query by combining the current message
-    with keywords extracted from the last user turn in the conversation.
-    This ensures follow-up questions (e.g. "but he took the wrong route")
-    retrieve relevant chunks even when the message lacks policy keywords.
+    Build an enriched RAG search query for follow-up messages.
+
+    Key insight: the PREVIOUS ASSISTANT RESPONSE already contains domain
+    keywords extracted from policy chunks (e.g. "500 meters", "geofence",
+    "automatic alert"). Prepending it to the current follow-up dramatically
+    improves semantic similarity to the correct policy chunks.
+
+    Strategy (only applied when current message is short / a follow-up):
+        enriched = prev_user_msg + prev_assistant_msg + current_msg
     """
     current = state["user_query"]
     history = state.get("conversation_history") or []
 
-    # Find the last user message in history (i.e. the previous turn)
-    prev_user = next(
-        (m["content"] for m in reversed(history) if m["role"] == "user"),
-        None,
-    )
-    if prev_user and len(current.split()) < 10:
-        # Short follow-up: prepend previous query for semantic richness
-        return f"{prev_user} {current}"
-    return current
+    # Only enrich short follow-ups — standalone questions search as-is
+    if not history or len(current.split()) >= 15:
+        return current
+
+    # Collect last 2 turns (up to 4 messages) in chronological order
+    recent = history[-4:]
+    context_parts = [m["content"] for m in recent]
+    return " ".join(context_parts) + " " + current
 
 
 def _build_policy_prompt_with_history(
