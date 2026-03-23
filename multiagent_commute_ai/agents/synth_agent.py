@@ -31,10 +31,23 @@ def _build_synth_prompt(state: "AgentState") -> str:
         )
 
     if intent == "policy_query":
+        # If the policy agent couldn't find a direct answer, check if there
+        # are retrieved chunks that give partial context to help the employee.
+        retrieved = state.get("retrieved_chunks", [])
+        partial_context = ""
+        if "not covered" in policy_answer.lower() and retrieved:
+            # Include a snippet of the most relevant chunk so the LLM can
+            # at least point the employee toward the right policy area.
+            partial_context = (
+                f"\n\nHOWEVER, here is the most relevant policy excerpt that may apply:\n"
+                f"{retrieved[0][:300]}"
+            )
         return (
             f"Rewrite the following HR policy answer as a clear, friendly reply in 2-3 sentences. "
-            f"Do not add any information not present below. Do not repeat instructions.\n\n"
-            f"POLICY ANSWER:\n{policy_answer}"
+            f"If the answer says 'not covered' but a related policy excerpt is provided, "
+            f"mention the related policy briefly before suggesting HR contact. "
+            f"Do not add information not present below. Do not repeat instructions.\n\n"
+            f"POLICY ANSWER:\n{policy_answer}{partial_context}"
         )
 
     if intent == "delay_claim":

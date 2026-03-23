@@ -16,13 +16,14 @@ from utils.logger import get_logger
 logger = get_logger("agent.policy")
 
 _SYSTEM_PROMPT_TEMPLATE = """
-You are a precise HR policy assistant. Answer the employee's question using ONLY the policy excerpts below.
+You are a helpful HR policy assistant. Answer the employee's question using the policy excerpts below.
 
 RULES:
-1. Answer clearly in 2-4 sentences using only the excerpts.
-2. If the answer is NOT in the excerpts, say: "This is not covered in the current policy. Please contact hr-support@acmecorp.in."
-3. Never invent amounts, rules, or eligibility criteria not present in the excerpts.
-4. End your answer with: SOURCE: <section name>
+1. Answer clearly in 2-4 sentences.
+2. If the question is RELATED to a topic in the excerpts (even if not word-for-word), apply the relevant policy clause. For example: "dropped at wrong address" relates to route deviation / geofence policy; "driver was rude" relates to complaint procedures.
+3. Only say "This is not covered in the current policy. Please contact hr-support@acmecorp.in." if the topic is COMPLETELY unrelated to ALL excerpts (e.g. salary, food, IT issues).
+4. Never invent amounts, rules, or eligibility criteria not present in the excerpts.
+5. End your answer with: SOURCE: <section name>
 
 POLICY EXCERPTS:
 {context}
@@ -155,8 +156,19 @@ async def policy_agent(state: AgentState) -> Dict[str, Any]:
             source_sections = [chunks[0].get("estimated_section", "Policy")]
         answer = "\n".join(body_lines).strip() or answer
 
-        confidence: float = 0.8 if answer and "not covered" not in answer.lower() else 0.3
-        needs_esc: bool = confidence < 0.4
+        not_covered = "not covered" in answer.lower()
+        no_answer    = not answer or len(answer.strip()) < 20
+
+        # Confidence tiers:
+        #   0.8 — answer found and grounded in excerpts
+        #   0.5 — LLM said "not covered" but still gave a contact/redirect
+        #   0.0 — no answer generated at all (exception / empty)
+        confidence: float = 0.0 if no_answer else (0.5 if not_covered else 0.8)
+
+        # Only escalate when there is genuinely NO answer.
+        # "Not covered" responses already include the HR email — that is
+        # sufficient guidance; don't stack an extra escalation badge on top.
+        needs_esc: bool = no_answer
 
         # Validate: if any INR amount in the answer is not in the chunks -> escalate
         if _contains_fabricated_amount(answer, chunks):
