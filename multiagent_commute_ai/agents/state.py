@@ -10,6 +10,9 @@ class AgentState(TypedDict):
     user_query: str
     employee_id: str
     commute_record: Dict[str, Any]   # Can be empty dict {}
+    # Ordered list of prior turns: [{"role": "user"|"assistant", "content": "..."}]
+    # Kept to last 6 messages (3 turns) to avoid token bloat.
+    conversation_history: List[Dict[str, str]]
 
     # ── Set by Intent Agent ──────────────────────────────────────────────────
     intent: str              # "policy_query" | "delay_claim" | "both" | "out_of_scope"

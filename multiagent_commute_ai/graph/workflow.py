@@ -132,14 +132,18 @@ async def run_workflow(
     query: str,
     employee_id: str,
     commute_record: Dict[str, Any] | None = None,
+    conversation_history: list | None = None,
 ) -> AgentState:
     """
     Build the initial AgentState and run the compiled workflow.
 
     Args:
-        query:          Employee's natural-language question.
-        employee_id:    Employee identifier string.
-        commute_record: Optional dict of commute data fields.
+        query:                Employee's natural-language question.
+        employee_id:          Employee identifier string.
+        commute_record:       Optional dict of commute data fields.
+        conversation_history: List of prior turns as
+                              [{"role": "user"|"assistant", "content": "..."}].
+                              Max last 6 messages used (3 full turns).
 
     Returns:
         Final AgentState after all agents have run.
@@ -147,11 +151,15 @@ async def run_workflow(
     if commute_record is None:
         commute_record = {}
 
+    # Cap history to last 6 messages to keep prompts lean
+    history = (conversation_history or [])[-6:]
+
     initial_state: AgentState = {
         # Inputs
         "user_query": query,
         "employee_id": employee_id,
         "commute_record": commute_record,
+        "conversation_history": history,
         # Intent agent outputs (defaults)
         "intent": "",
         "intent_confidence": 0.0,

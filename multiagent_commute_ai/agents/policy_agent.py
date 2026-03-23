@@ -55,6 +55,53 @@ def _contains_fabricated_amount(answer: str, chunks: List[Dict[str, Any]]) -> bo
     return False
 
 
+def _build_search_query(state: AgentState) -> str:
+    """
+    Build an enriched RAG search query by combining the current message
+    with keywords extracted from the last user turn in the conversation.
+    This ensures follow-up questions (e.g. "but he took the wrong route")
+    retrieve relevant chunks even when the message lacks policy keywords.
+    """
+    current = state["user_query"]
+    history = state.get("conversation_history") or []
+
+    # Find the last user message in history (i.e. the previous turn)
+    prev_user = next(
+        (m["content"] for m in reversed(history) if m["role"] == "user"),
+        None,
+    )
+    if prev_user and len(current.split()) < 10:
+        # Short follow-up: prepend previous query for semantic richness
+        return f"{prev_user} {current}"
+    return current
+
+
+def _build_policy_prompt_with_history(
+    context: str,
+    query: str,
+    history: List[Dict[str, str]],
+) -> str:
+    """
+    Build the policy answer prompt, optionally including recent conversation
+    so the LLM can give a contextually coherent answer on follow-ups.
+    """
+    recent = history[-4:] if len(history) > 4 else history
+
+    if not recent:
+        return _SYSTEM_PROMPT_TEMPLATE.format(context=context, query=query)
+
+    history_block = "\n".join(
+        f"{'Employee' if m['role'] == 'user' else 'Assistant'}: {m['content']}"
+        for m in recent
+    )
+    return (
+        _SYSTEM_PROMPT_TEMPLATE.replace(
+            "EMPLOYEE QUESTION: {query}",
+            f"CONVERSATION SO FAR:\n{history_block}\n\nEMPLOYEE FOLLOW-UP: {{query}}",
+        ).format(context=context, query=query)
+    )
+
+
 async def policy_agent(state: AgentState) -> Dict[str, Any]:
     """
     LangGraph node: retrieve policy chunks and generate a grounded answer.
@@ -74,13 +121,14 @@ async def policy_agent(state: AgentState) -> Dict[str, Any]:
 
     try:
         retriever = get_retriever()
-        chunks = retriever.retrieve(state["user_query"], top_k=5)
+        # Use enriched query for retrieval so follow-ups find the right chunks.
+        # Use top_k=7 to cast a wider net — the LLM filters for relevance anyway.
+        search_query = _build_search_query(state)
+        chunks = retriever.retrieve(search_query, top_k=7)
         context = retriever.format_context(chunks)
 
-        prompt = _SYSTEM_PROMPT_TEMPLATE.format(
-            context=context,
-            query=state["user_query"],
-        )
+        history = state.get("conversation_history") or []
+        prompt = _build_policy_prompt_with_history(context, state["user_query"], history)
 
         llm = get_llm_client()
         raw: str = await llm.complete_chat("", prompt)

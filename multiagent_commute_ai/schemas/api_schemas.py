@@ -20,11 +20,20 @@ class CommuteRecord(BaseModel):
     is_holiday: int = 0
 
 
+class ChatMessage(BaseModel):
+    """A single turn in the conversation history."""
+    role: str    # "user" or "assistant"
+    content: str
+
+
 class QueryRequest(BaseModel):
     """Incoming request for a policy/claim query."""
     employee_id: str
     query: str
     commute_record: Optional[CommuteRecord] = None
+    # Last N conversation turns sent from the client for context continuity.
+    # Max 6 messages (3 full turns) are used; older history is ignored.
+    conversation_history: List[ChatMessage] = []
 
     model_config = ConfigDict(
         json_schema_extra={

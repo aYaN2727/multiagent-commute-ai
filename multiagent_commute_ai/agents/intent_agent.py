@@ -58,6 +58,28 @@ A: {"intent": "out_of_scope", "confidence": 0.97}
 _VALID_INTENTS = {"policy_query", "delay_claim", "both", "out_of_scope"}
 
 
+def _build_intent_user_message(state: AgentState) -> str:
+    """
+    Build the user message for intent classification.
+    If there is conversation history, prepend the last 2 turns so the LLM
+    can resolve pronouns and follow-up references (e.g. "but he did X").
+    """
+    history = state.get("conversation_history") or []
+    # Keep last 4 messages (2 turns) for context — avoid token bloat
+    recent = history[-4:] if len(history) > 4 else history
+
+    if not recent:
+        return state["user_query"]
+
+    lines = ["Previous conversation (for context only):"]
+    for msg in recent:
+        role_label = "Employee" if msg["role"] == "user" else "Assistant"
+        lines.append(f"{role_label}: {msg['content']}")
+    lines.append("")
+    lines.append(f"Current message to classify: {state['user_query']}")
+    return "\n".join(lines)
+
+
 async def intent_agent(state: AgentState) -> Dict[str, Any]:
     """
     LangGraph async node: classify the user query.
@@ -68,7 +90,8 @@ async def intent_agent(state: AgentState) -> Dict[str, Any]:
 
     try:
         llm = get_llm_client()
-        raw: str = await llm.complete_chat(_SYSTEM_PROMPT, state["user_query"])
+        user_msg = _build_intent_user_message(state)
+        raw: str = await llm.complete_chat(_SYSTEM_PROMPT, user_msg)
 
         # Strip markdown fences if present
         cleaned = raw.strip()

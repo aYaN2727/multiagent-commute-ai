@@ -173,10 +173,13 @@ async def query_endpoint(request: QueryRequest) -> QueryResponse:
             request.commute_record.model_dump() if request.commute_record else {}
         )
 
+        history = [m.model_dump() for m in request.conversation_history]
+
         final_state = await run_workflow(
             query=request.query,
             employee_id=request.employee_id,
             commute_record=commute_dict,
+            conversation_history=history,
         )
 
         return QueryResponse(

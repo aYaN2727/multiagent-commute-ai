@@ -266,6 +266,9 @@
 <script>
 const API = "http://localhost:8000";
 let busy = false;
+// Conversation memory: [{role: "user"|"assistant", content: "..."}]
+// Sent with every request so agents can resolve follow-up questions.
+let conversationHistory = [];
 
 // ── Health check ─────────────────────────────────────────────────────────────
 async function checkHealth() {
@@ -400,12 +403,23 @@ async function sendMessage() {
   // User bubble
   appendBubble("user", escHtml(query));
 
+  // Add user turn to history BEFORE sending (so agents see it as context)
+  conversationHistory.push({ role: "user", content: query });
+
   // Typing indicator
   const typingId = "typing-" + Date.now();
   appendBubble("bot", `<div class="dots"><span></span><span></span><span></span></div>`, typingId);
 
   try {
-    const payload = { employee_id: empId, query: query };
+    // Send history EXCLUDING the current message (it's in "query" field)
+    // History = all turns before the current one
+    const historyToSend = conversationHistory.slice(0, -1).slice(-6);
+
+    const payload = {
+      employee_id: empId,
+      query: query,
+      conversation_history: historyToSend,
+    };
 
     const r = await fetch(API + "/query", {
       method: "POST",
@@ -417,13 +431,21 @@ async function sendMessage() {
 
     if (!r.ok) {
       const err = await r.json().catch(() => ({ detail: r.statusText }));
+      // Remove the failed user turn from history
+      conversationHistory.pop();
       appendBubble("bot", `&#9888; Error ${r.status}: ${escHtml(err.detail || r.statusText)}`);
     } else {
       const data = await r.json();
+      const botText = data.final_response || "Sorry, I could not process your request.";
+      // Add assistant reply to history
+      conversationHistory.push({ role: "assistant", content: botText });
+      // Keep history capped at 20 messages (10 turns)
+      if (conversationHistory.length > 20) conversationHistory = conversationHistory.slice(-20);
       appendBubble("bot", buildBotHTML(data));
     }
   } catch (e) {
     removeById(typingId);
+    conversationHistory.pop();
     appendBubble("bot", "&#9888; Could not reach the server. Make sure the backend is running on port 8000.");
   }
 
