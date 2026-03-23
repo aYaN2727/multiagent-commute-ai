@@ -1,0 +1,62 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "🚀 Run FastAPI Server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/multiagent_commute_ai/main.py",
+            "cwd": "${workspaceFolder}/multiagent_commute_ai",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/multiagent_commute_ai"
+            }
+        },
+        {
+            "name": "🔁 Retrain Anomaly Model",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "ml.train_isolation_forest",
+            "cwd": "${workspaceFolder}/multiagent_commute_ai",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/multiagent_commute_ai"
+            }
+        },
+        {
+            "name": "📄 Rebuild RAG Index",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "rag.ingestion",
+            "cwd": "${workspaceFolder}/multiagent_commute_ai",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/multiagent_commute_ai"
+            }
+        },
+        {
+            "name": "🔀 Adapt IEEE-CIS Dataset",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/multiagent_commute_ai/data/adapt_ieee_cis.py",
+            "args": ["--sample", "200000"],
+            "cwd": "${workspaceFolder}/multiagent_commute_ai",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/multiagent_commute_ai"
+            }
+        },
+        {
+            "name": "🧪 Run Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/multiagent_commute_ai/test_pipeline.py",
+            "cwd": "${workspaceFolder}/multiagent_commute_ai",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/multiagent_commute_ai"
+            }
+        }
+    ]
+}

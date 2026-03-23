@@ -1,0 +1,77 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start Ollama",
+            "type": "shell",
+            "command": "ollama serve",
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": {
+                "group": "startup",
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Install Dependencies",
+            "type": "shell",
+            "command": "pip install -r requirements.txt",
+            "options": {
+                "cwd": "${workspaceFolder}/multiagent_commute_ai"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Adapt IEEE-CIS Data",
+            "type": "shell",
+            "command": "python data/adapt_ieee_cis.py --sample 200000",
+            "options": {
+                "cwd": "${workspaceFolder}/multiagent_commute_ai"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Train Anomaly Model",
+            "type": "shell",
+            "command": "python -m ml.train_isolation_forest",
+            "options": {
+                "cwd": "${workspaceFolder}/multiagent_commute_ai"
+            },
+            "dependsOn": "Adapt IEEE-CIS Data",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Rebuild RAG Index",
+            "type": "shell",
+            "command": "python -m rag.ingestion",
+            "options": {
+                "cwd": "${workspaceFolder}/multiagent_commute_ai"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Full Setup (first time)",
+            "dependsOn": [
+                "Install Dependencies",
+                "Adapt IEEE-CIS Data",
+                "Train Anomaly Model",
+                "Rebuild RAG Index"
+            ],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        }
+    ]
+}

@@ -38,7 +38,7 @@ multiagent_commute_ai/data/test_identity.csv
 multiagent_commute_ai/data/policies/*.pdf
 
 # IDE / OS
-.vscode/
+# .vscode/ — shared launch configs committed intentionally
 .idea/
 *.swp
 *.swo
