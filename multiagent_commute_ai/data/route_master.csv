@@ -1,0 +1,26 @@
+route_id,origin_zone,destination,distance_km,avg_time_min,peak_time_min,max_detour_min,approved_stops,vehicle_type,night_eligible,escort_required_night,geofence_radius_m
+R001,Whitefield,"Bagmane Tech Park, Bangalore",14,35,55,7,3,Sedan/SUV,Yes,Yes,500
+R002,Electronic City Phase 1,Koramangala 4th Block,11,28,48,5,2,Sedan,Yes,Yes,500
+R003,HSR Layout Sector 2,Manyata Tech Park,22,50,80,10,4,SUV/Innova,Yes,Yes,500
+R004,Marathahalli Bridge,Embassy Golf Links,8,20,38,4,2,Sedan,Yes,Yes,500
+R005,BTM Layout 2nd Stage,"RMZ Infinity, Banaswadi",18,42,65,8,3,Sedan/SUV,Yes,Yes,500
+R006,Sarjapur Road,Ecospace Business Park,16,38,60,7,3,Sedan,Yes,Yes,500
+R007,JP Nagar 6th Phase,"Salarpuria Softzone, Bellandur",20,45,72,9,4,SUV/Innova,Yes,Yes,500
+R008,Bannerghatta Road,Global Village Tech Park,24,55,85,11,4,SUV/Innova,Yes,Yes,500
+R009,Hennur Main Road,"Prestige Tech Park, Marathahalli",19,44,70,8,3,Sedan,Yes,Yes,500
+R010,Yelahanka New Town,"Manyata Tech Park, Hebbal",15,32,52,6,2,Sedan,Yes,Yes,500
+R011,Rajajinagar,Bagmane World Technology Centre,10,25,42,5,2,Sedan,Yes,Yes,500
+R012,Jayanagar 4th Block,"Cessna Business Park, Kadubeesanahalli",21,48,76,9,4,SUV/Innova,Yes,Yes,500
+R013,Vijayanagar,"RMZ Ecoworld, Bellandur",23,52,82,10,4,SUV/Innova,Yes,Yes,500
+R014,Koramangala 1st Block,"Embassy Tech Village, Devarabeesanahalli",12,30,50,6,2,Sedan,Yes,Yes,500
+R015,Indiranagar 100ft Road,Manyata Tech Park,13,33,54,6,3,Sedan,Yes,Yes,500
+R016,CV Raman Nagar,"ITPL, Whitefield",17,40,64,8,3,Sedan/SUV,Yes,Yes,500
+R017,Marathahalli,Outer Ring Road (Kadubeesanahalli),5,15,28,3,1,Sedan,Yes,No,500
+R018,Bellandur,Sarjapur Road (Wipro Campus),9,22,38,4,2,Sedan,Yes,Yes,500
+R019,KR Puram,Whitefield ITPL,12,28,46,5,2,Sedan,Yes,Yes,500
+R020,Nagarbhavi,Electronic City Phase 2,30,65,95,13,5,SUV/Innova,Yes,Yes,500
+R021,Hebbal,Kempegowda International Airport,38,55,75,11,4,SUV/Innova,Yes,Yes,500
+R022,Silk Board,Koramangala (Office Hub),6,18,35,3,1,Sedan,Yes,No,500
+R023,Banashankari,Outer Ring Road (Marathahalli),19,43,68,8,3,Sedan,Yes,Yes,500
+R024,RT Nagar,MG Road (CBD),14,34,56,6,2,Sedan,Yes,Yes,500
+R025,Yelahanka,Devanahalli Business Park,20,42,62,8,3,SUV/Innova,Yes,Yes,500

@@ -27,8 +27,12 @@ multiagent_commute_ai/models/shap_values_sample.csv
 # FAISS index (regenerate with python -m rag.ingestion)
 multiagent_commute_ai/indexes/
 
-# Generated training data (regenerate with python data/generate_commute_records.py)
+# Generated / large training data (regenerate locally — see README)
 multiagent_commute_ai/data/commute_records.csv
+multiagent_commute_ai/data/train_transaction.csv
+multiagent_commute_ai/data/test_transaction.csv
+multiagent_commute_ai/data/train_identity.csv
+multiagent_commute_ai/data/test_identity.csv
 
 # Policy PDFs — add your own (not committed to keep repo lightweight)
 multiagent_commute_ai/data/policies/*.pdf
