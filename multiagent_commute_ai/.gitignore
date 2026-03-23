@@ -10,3 +10,18 @@ __pycache__/
 .pytest_cache/
 htmlcov/
 .coverage
+
+# Large model files (>1 GB — regenerate with: python -m ml.finetune_embeddings)
+models/finetuned_embedder/
+
+# Raw datasets (download from Kaggle: ieee-fraud-detection)
+data/train_transaction.csv
+data/train_identity.csv
+
+# Environment & secrets
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db

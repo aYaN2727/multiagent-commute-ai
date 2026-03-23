@@ -76,12 +76,14 @@ word-for-word), apply the relevant policy clause.
 Please contact hr-support@acmecorp.in." if the topic is COMPLETELY unrelated \
 to ALL excerpts (e.g. salary, food, IT issues).
 4. Never invent amounts, rules, or eligibility criteria not in the excerpts.
-5. End your answer with: SOURCE: <section name>
+5. IMPORTANT: State what the policy actually says — do NOT just say \
+"refer to Section X" or "see policy B3". Quote or paraphrase the actual rule.
+6. End your answer with: SOURCE: <section name>
 
 POLICY EXCERPTS:
-{context}
+CONTEXT_PLACEHOLDER
 
-{question_block}
+QUESTION_PLACEHOLDER
 
 Answer:"""
 
@@ -180,9 +182,12 @@ def _build_answer_prompt(
     else:
         question_block = f"EMPLOYEE QUESTION: {original_query}"
 
-    return _ANSWER_SYSTEM_TEMPLATE.format(
-        context=context,
-        question_block=question_block,
+    # Use .replace() instead of .format() so curly braces in PDF chunk text
+    # (e.g. "{route_id}") never crash with a KeyError.
+    return (
+        _ANSWER_SYSTEM_TEMPLATE
+        .replace("CONTEXT_PLACEHOLDER", context)
+        .replace("QUESTION_PLACEHOLDER", question_block)
     )
 
 

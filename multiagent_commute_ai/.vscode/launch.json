@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run FastAPI Server",
+            "name": "▶ Run FastAPI Server",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
@@ -14,7 +14,55 @@
             }
         },
         {
-            "name": "Retrain Anomaly Model",
+            "name": "🧠 Fine-Tune Anomaly Model (GBM)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "ml.train_supervised",
+            "args": ["--cv"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "⚡ Fine-Tune Anomaly Model (Quick)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "ml.train_supervised",
+            "args": ["--quick"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "🔤 Fine-Tune Embeddings (RAG)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "ml.finetune_embeddings",
+            "args": ["--epochs", "5"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "🔤 Fine-Tune Embeddings (Dry Run)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "ml.finetune_embeddings",
+            "args": ["--dry-run"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "📊 Retrain Isolation Forest (baseline)",
             "type": "debugpy",
             "request": "launch",
             "module": "ml.train_isolation_forest",
@@ -25,7 +73,7 @@
             }
         },
         {
-            "name": "Rebuild RAG Index",
+            "name": "📚 Rebuild RAG Index",
             "type": "debugpy",
             "request": "launch",
             "module": "rag.ingestion",
@@ -36,7 +84,19 @@
             }
         },
         {
-            "name": "Adapt IEEE-CIS Dataset",
+            "name": "📚 Rebuild RAG Index (Fine-tuned Embedder)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "rag.ingestion",
+            "args": ["--embed-model", "models/finetuned_embedder"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "🗃️ Adapt IEEE-CIS Dataset",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/data/adapt_ieee_cis.py",
@@ -48,7 +108,7 @@
             }
         },
         {
-            "name": "Run Tests",
+            "name": "🧪 Run Tests",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/test_pipeline.py",

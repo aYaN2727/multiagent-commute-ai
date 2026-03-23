@@ -1,0 +1,10 @@
+{
+  "base_model": "sentence-transformers/all-mpnet-base-v2",
+  "finetuned_model": "models\\finetuned_embedder",
+  "n_training_pairs": 1247,
+  "epochs": 5,
+  "batch_size": 16,
+  "training_time_sec": 1302.5,
+  "recall_at_1_before": 0.07,
+  "recall_at_1_after": 0.97
+}

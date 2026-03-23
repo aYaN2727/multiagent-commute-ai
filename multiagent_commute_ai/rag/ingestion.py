@@ -4,11 +4,13 @@ Document loading -> chunking -> embedding -> FAISS index build pipeline.
 
 Usage:
     python -m rag.ingestion
+    python -m rag.ingestion --embed-model models/finetuned_embedder
 """
 from __future__ import annotations
 
 import json
 import os
+import pickle
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -27,7 +29,8 @@ from utils.logger import get_logger
 logger = get_logger("rag.ingestion")
 settings = get_settings()
 
-CHUNKS_JSON_PATH = Path(settings.FAISS_INDEX_PATH).with_name("policy_chunks.json")
+CHUNKS_JSON_PATH    = Path(settings.FAISS_INDEX_PATH).with_name("policy_chunks.json")
+CHUNKS_PICKLE_PATH  = Path(settings.FAISS_INDEX_PATH).with_name("policy_chunks.pkl")
 
 
 def _extract_text_from_file(path: Path) -> str:
@@ -101,11 +104,12 @@ def _infer_section(text: str) -> str:
     return "General"
 
 
-def _embed_chunks(chunks: List[Dict[str, Any]]) -> np.ndarray:
+def _embed_chunks(chunks: List[Dict[str, Any]], embed_model: str | None = None) -> np.ndarray:
     """Embed all chunk texts using sentence-transformers; returns unit-normalised matrix."""
-    model = SentenceTransformer(settings.EMBED_MODEL)
+    model_name = embed_model or settings.EMBED_MODEL
+    model = SentenceTransformer(model_name)
     texts = [c["text"] for c in chunks]
-    logger.info(f"Embedding {len(texts)} chunks with {settings.EMBED_MODEL}",
+    logger.info(f"Embedding {len(texts)} chunks with {model_name}",
                 extra={"agent_name": "ingestion"})
     embeddings: np.ndarray = model.encode(
         texts,
@@ -127,10 +131,14 @@ def _build_faiss_index(embeddings: np.ndarray) -> faiss.IndexFlatIP:
     return index
 
 
-def build_index() -> None:
+def build_index(embed_model: str | None = None) -> None:
     """
     Full pipeline: load -> chunk -> embed -> FAISS index -> save.
     Called when this module is executed directly.
+
+    Args:
+        embed_model: Override embedding model path (e.g. 'models/finetuned_embedder').
+                     Defaults to settings.EMBED_MODEL.
     """
     # Ensure output directories exist
     index_path = Path(settings.FAISS_INDEX_PATH)
@@ -138,17 +146,22 @@ def build_index() -> None:
 
     docs = _load_documents()
     chunks = _chunk_documents(docs)
-    embeddings = _embed_chunks(chunks)
+    embeddings = _embed_chunks(chunks, embed_model=embed_model)
     index = _build_faiss_index(embeddings)
 
     # Save FAISS index
     faiss.write_index(index, str(index_path))
     logger.info(f"FAISS index saved to {index_path}", extra={"agent_name": "ingestion"})
 
-    # Save chunk metadata + text
+    # Save chunk metadata as JSON
     with open(CHUNKS_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(chunks, f, ensure_ascii=False, indent=2)
-    logger.info(f"Chunk data saved to {CHUNKS_JSON_PATH}", extra={"agent_name": "ingestion"})
+    logger.info(f"Chunk data (JSON) saved to {CHUNKS_JSON_PATH}", extra={"agent_name": "ingestion"})
+
+    # Save chunk metadata as pickle (used by ml/finetune_embeddings.py)
+    with open(str(CHUNKS_PICKLE_PATH), "wb") as f:
+        pickle.dump(chunks, f)
+    logger.info(f"Chunk data (pickle) saved to {CHUNKS_PICKLE_PATH}", extra={"agent_name": "ingestion"})
 
     print(f"\nIndex built with {len(chunks)} chunks. FAISS index -> {index_path}")
 
@@ -179,5 +192,22 @@ def load_index() -> tuple[faiss.IndexFlatIP, List[Dict[str, Any]]]:
     return index, chunks
 
 
+def ingest_documents() -> List[Dict[str, Any]]:
+    """
+    Load and chunk all policy documents. Returns the list of chunk dicts.
+    Used by ml/finetune_embeddings.py to get chunks without rebuilding the index.
+    """
+    docs = _load_documents()
+    return _chunk_documents(docs)
+
+
 if __name__ == "__main__":
-    build_index()
+    import argparse as _argparse
+    _parser = _argparse.ArgumentParser(description="Build FAISS index from policy PDFs")
+    _parser.add_argument(
+        "--embed-model", default=None,
+        help="Embedding model path or name (default: settings.EMBED_MODEL). "
+             "Use 'models/finetuned_embedder' after running ml/finetune_embeddings.py."
+    )
+    _args = _parser.parse_args()
+    build_index(embed_model=_args.embed_model)
