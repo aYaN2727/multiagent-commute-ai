@@ -9,15 +9,14 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Dict
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from config.settings import get_settings
 from graph.workflow import get_compiled_app, run_workflow
 from schemas.api_schemas import (
-    ErrorResponse,
     HealthResponse,
     QueryRequest,
     QueryResponse,
@@ -204,12 +203,9 @@ async def query_endpoint(request: QueryRequest) -> QueryResponse:
             extra={"agent_name": "main"},
             exc_info=True,
         )
-        return JSONResponse(
+        raise HTTPException(
             status_code=500,
-            content=ErrorResponse(
-                error="InternalServerError",
-                detail=str(exc),
-            ).model_dump(),
+            detail={"error": "InternalServerError", "detail": str(exc)},
         )
 
 
