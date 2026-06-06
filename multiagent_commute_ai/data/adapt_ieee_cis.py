@@ -131,38 +131,27 @@ def transform(df: pd.DataFrame, routes: pd.DataFrame) -> pd.DataFrame:
     base_delay  = route_avg_delay_min * rng.uniform(0.1, 0.5, n)
 
     # ── Delay minutes ─────────────────────────────────────────────────────
-    # For fraud rows: extreme delay relative to route avg
-    # For normal rows: reasonable delay based on D1 (days since last tx)
-    d1 = df["D1"].fillna(0).clip(0, 365).values
-    # Higher D1 → employee was absent longer → plausible higher delay claim
-    delay_from_d1 = np.clip(d1 * 0.5, 0, 40)
-
-    delay_minutes = np.where(
-        df["isFraud"].values == 1,
-        # Fraud: 1.5–4x route average with noise — realistic but elevated.
-        # Previously 2.5–10x which created an 8.5x mean ratio (too extreme).
-        route_avg_delay_min * rng.uniform(1.5, 4.0, n)
-            + rng.normal(0, 15, n).clip(-10),
-        # Normal: base delay + D1-derived noise
-        base_delay + delay_from_d1 + rng.normal(0, 5, n).clip(0),
+    # Derived purely from D1 (days since previous transaction) and route
+    # properties — NO conditioning on isFraud to avoid synthetic data leakage.
+    # D1 in IEEE-CIS is a real behavioural signal: fraudsters often come back
+    # after long gaps or very quickly, producing natural variation.
+    d1 = df["D1"].fillna(df["D1"].median()).clip(0, 365).values
+    delay_from_d1 = np.clip(d1 * 0.15, 0, 50)
+    delay_minutes = (
+        base_delay + delay_from_d1 + rng.normal(0, 8, n)
     ).clip(0).round(1)
 
     # ── Claim frequency (30d) ─────────────────────────────────────────────
-    # C1 = count of cards used; maps well to claim frequency.
-    # FIXED: previous hard clips (normal 0-7, fraud 8-30) created perfect
-    # separation with zero overlap — unrealistic and caused inflated metrics.
-    # Now both distributions overlap realistically in the 4-12 range.
-    c1 = df["C1"].fillna(1).clip(0, 30).values
+    # C1 = count of card addresses associated with the card.
+    # High C1 is a REAL fraud signal in IEEE-CIS data — no conditioning on
+    # isFraud needed here; the natural correlation is preserved as-is.
+    c1 = df["C1"].fillna(df["C1"].median()).clip(0, 30).values
     c2 = df["C2"].fillna(0).clip(0, 10).values
 
-    claim_frequency_30d = np.where(
-        df["isFraud"].values == 1,
-        # Fraud: tends to be higher but with realistic overlap at lower end.
-        # Range: ~4-25, mean ~14 (not hard-clipped above 8)
-        np.clip(c1 * 1.2 + c2 * 0.5 + rng.integers(2, 12, n), 1, 25),
-        # Normal: tends to be lower but some legitimate high-frequency users.
-        # Range: 0-14, mean ~3 (not hard-clipped below 8)
-        np.clip(c1 * 0.4 + rng.integers(0, 5, n), 0, 14),
+    # Same formula for everyone — fraud rows naturally have higher C1 in
+    # IEEE-CIS, so the signal is real, not injected by np.where.
+    claim_frequency_30d = np.clip(
+        c1 * 0.7 + c2 * 0.3 + rng.integers(0, 6, n), 0, 28
     ).astype(float)
 
     # ── Timing: weekend / holiday ─────────────────────────────────────────
